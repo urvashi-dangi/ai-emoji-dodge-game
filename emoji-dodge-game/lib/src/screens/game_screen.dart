@@ -7,6 +7,8 @@ import '../models/falling_emoji.dart';
 import '../widgets/game_painter.dart';
 
 class GameScreen extends StatefulWidget {
+  static const String routeName = '/game';
+
   const GameScreen({super.key});
 
   @override
@@ -38,8 +40,12 @@ class _GameScreenState extends State<GameScreen>
   double _playerCenterX = 0;
   double _playerTargetX = 0;
   bool _isRunning = true;
+  bool _isCollisionAnimating = false;
   bool _isGameOver = false;
   bool _resultSent = false;
+  double _collisionProgress = 0;
+  Offset? _collisionCenter;
+  String? _collisionEmoji;
   Size _playSize = Size.zero;
 
   @override
@@ -56,7 +62,13 @@ class _GameScreenState extends State<GameScreen>
 
   int get _score => (_survivalTime * 10).floor();
 
-  double get _difficulty => 1 + (_survivalTime / 18);
+  int get _level => (_survivalTime ~/ 12) + 1;
+
+  double get _difficulty {
+    final timeRamp = 1 + (_survivalTime / 24);
+    final levelRamp = 1 + ((_level - 1) * 0.22);
+    return timeRamp * levelRamp;
+  }
 
   double get _playerSize {
     if (_playSize == Size.zero) {
@@ -79,7 +91,7 @@ class _GameScreenState extends State<GameScreen>
   );
 
   void _onTick(Duration elapsed) {
-    if (!_isRunning || !mounted) {
+    if (!mounted) {
       _lastTick = elapsed;
       return;
     }
@@ -94,11 +106,26 @@ class _GameScreenState extends State<GameScreen>
         (elapsed - previous).inMicroseconds / Duration.microsecondsPerSecond;
     dt = dt.clamp(0, 0.05);
 
+    if (_isCollisionAnimating) {
+      _collisionProgress = (_collisionProgress + (dt / 0.45)).clamp(0.0, 1.0);
+      if (_collisionProgress >= 1) {
+        _finishCollisionAnimation();
+      }
+      if (mounted) {
+        setState(() {});
+      }
+      return;
+    }
+
+    if (!_isRunning) {
+      return;
+    }
+
     // Keep score and spawn rate tied to real survival time so the game
     // feels consistent across devices with different frame timings.
     _survivalTime += dt;
     _spawnAccumulator += dt;
-    final spawnInterval = math.max(0.18, 0.72 - (_difficulty * 0.05));
+    final spawnInterval = math.max(0.16, 0.76 - (_level * 0.045));
 
     final followStrength = 14 * dt;
     _playerCenterX += (_playerTargetX - _playerCenterX) *
@@ -121,7 +148,7 @@ class _GameScreenState extends State<GameScreen>
     final playerBounds = _playerBounds;
     for (final emoji in _emojis) {
       if (emoji.bounds.overlaps(playerBounds)) {
-        _triggerGameOver();
+        _startCollisionAnimation(emoji);
         break;
       }
     }
@@ -173,7 +200,7 @@ class _GameScreenState extends State<GameScreen>
   }
 
   void _togglePause() {
-    if (_isGameOver) {
+    if (_isGameOver || _isCollisionAnimating) {
       return;
     }
     setState(() {
@@ -187,8 +214,12 @@ class _GameScreenState extends State<GameScreen>
       _spawnAccumulator = 0;
       _survivalTime = 0;
       _isRunning = true;
+      _isCollisionAnimating = false;
       _isGameOver = false;
       _lastTick = null;
+      _collisionProgress = 0;
+      _collisionCenter = null;
+      _collisionEmoji = null;
       if (_playSize != Size.zero) {
         _playerCenterX = _playSize.width / 2;
         _playerTargetX = _playerCenterX;
@@ -197,13 +228,29 @@ class _GameScreenState extends State<GameScreen>
     });
   }
 
-  void _triggerGameOver() {
+  void _startCollisionAnimation(FallingEmoji emoji) {
+    if (_isGameOver || _isCollisionAnimating) {
+      return;
+    }
+    setState(() {
+      _isCollisionAnimating = true;
+      _isRunning = false;
+      _collisionProgress = 0;
+      _collisionEmoji = emoji.symbol;
+      _collisionCenter = Offset(
+        emoji.x + (emoji.size / 2),
+        emoji.y + (emoji.size / 2),
+      );
+    });
+  }
+
+  void _finishCollisionAnimation() {
     if (_isGameOver) {
       return;
     }
     setState(() {
+      _isCollisionAnimating = false;
       _isGameOver = true;
-      _isRunning = false;
     });
   }
 
@@ -244,12 +291,12 @@ class _GameScreenState extends State<GameScreen>
 
           return Stack(
             children: <Widget>[
-              GestureDetector(
+              Listener(
                 behavior: HitTestBehavior.opaque,
-                onHorizontalDragStart: (DragStartDetails details) =>
-                    _updatePlayerTarget(details.localPosition.dx),
-                onHorizontalDragUpdate: (DragUpdateDetails details) =>
-                    _updatePlayerTarget(details.localPosition.dx),
+                onPointerMove: (event) =>
+                    _updatePlayerTarget(event.localPosition.dx),
+                onPointerHover: (event) =>
+                    _updatePlayerTarget(event.localPosition.dx),
                 child: RepaintBoundary(
                   child: CustomPaint(
                     size: nextSize,
@@ -258,6 +305,9 @@ class _GameScreenState extends State<GameScreen>
                       playerCenterX: _playerCenterX,
                       playerSize: _playerSize,
                       playerY: _playerY,
+                      collisionCenter: _collisionCenter,
+                      collisionEmoji: _collisionEmoji,
+                      collisionProgress: _collisionProgress,
                     ),
                   ),
                 ),
@@ -271,6 +321,8 @@ class _GameScreenState extends State<GameScreen>
                   child: Row(
                     children: <Widget>[
                       _HudChip(icon: '⏱️', label: 'Score', value: '$_score'),
+                      const SizedBox(width: 12),
+                      _HudChip(icon: '🆙', label: 'Level', value: '$_level'),
                       const Spacer(),
                       _HudChip(
                         icon: '🚀',
@@ -299,10 +351,12 @@ class _GameScreenState extends State<GameScreen>
                   ),
                 ),
               ),
-              if (!_isRunning && !_isGameOver)
-                const _CenterMessage(
-                  title: 'Paused',
-                  subtitle: 'Tap the play button to jump back in.',
+              if (!_isRunning && !_isGameOver && !_isCollisionAnimating)
+                const IgnorePointer(
+                  child: _CenterMessage(
+                    title: 'Paused',
+                    subtitle: 'Tap the play button to jump back in.',
+                  ),
                 ),
               if (_isGameOver)
                 _GameOverOverlay(

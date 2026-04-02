@@ -10,7 +10,7 @@ class HomeScreen extends StatelessWidget {
 
   final int bestScore;
   final int? lastScore;
-  final VoidCallback onStartGame;
+  final Future<void> Function() onStartGame;
 
   @override
   Widget build(BuildContext context) {

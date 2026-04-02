@@ -8,12 +8,18 @@ class GamePainter extends CustomPainter {
     required this.playerCenterX,
     required this.playerSize,
     required this.playerY,
+    required this.collisionCenter,
+    required this.collisionEmoji,
+    required this.collisionProgress,
   });
 
   final List<FallingEmoji> emojis;
   final double playerCenterX;
   final double playerSize;
   final double playerY;
+  final Offset? collisionCenter;
+  final String? collisionEmoji;
+  final double collisionProgress;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -73,13 +79,46 @@ class GamePainter extends CustomPainter {
         playerY - (playerTextPainter.height / 2),
       ),
     );
+
+    if (collisionCenter != null && collisionProgress > 0) {
+      final center = collisionCenter!;
+      final burstRadius = playerSize * (0.5 + (collisionProgress * 1.8));
+      final burstPaint = Paint()
+        ..color = const Color(0xFFFF6B6B).withValues(
+          alpha: (1 - collisionProgress) * 0.45,
+        )
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(center, burstRadius, burstPaint);
+
+      final ringPaint = Paint()
+        ..color = const Color(0xFFFFC43D).withValues(
+          alpha: (1 - collisionProgress) * 0.95,
+        )
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6;
+      canvas.drawCircle(center, burstRadius * 0.82, ringPaint);
+
+      final hitTextPainter = TextPainter(
+        text: TextSpan(
+          text: collisionEmoji ?? '💥',
+          style: TextStyle(fontSize: playerSize * (1 + collisionProgress)),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      hitTextPainter.paint(
+        canvas,
+        Offset(
+          center.dx - (hitTextPainter.width / 2),
+          center.dy - (hitTextPainter.height / 2),
+        ),
+      );
+    }
   }
 
   @override
   bool shouldRepaint(covariant GamePainter oldDelegate) {
-    return oldDelegate.emojis != emojis ||
-        oldDelegate.playerCenterX != playerCenterX ||
-        oldDelegate.playerY != playerY ||
-        oldDelegate.playerSize != playerSize;
+    // Emoji positions are mutated in place during the game loop, so the list
+    // reference often stays the same even though the frame contents changed.
+    return true;
   }
 }

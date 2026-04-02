@@ -11,18 +11,42 @@ class EmojiDodgeApp extends StatefulWidget {
 }
 
 class _EmojiDodgeAppState extends State<EmojiDodgeApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   int _bestScore = 0;
   int? _lastScore;
+  Route<int>? _activeGameRoute;
 
-  Future<void> _openGame(BuildContext context) async {
-    final result = await Navigator.of(context).push<int>(
-      MaterialPageRoute<int>(builder: (_) => const GameScreen()),
+  Future<void> _openGame() async {
+    if (_activeGameRoute != null) {
+      return;
+    }
+
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) {
+      return;
+    }
+
+    final route = MaterialPageRoute<int>(
+      builder: (_) => const GameScreen(),
+      settings: const RouteSettings(name: GameScreen.routeName),
     );
+    _activeGameRoute = route;
+
+    int? result;
+    try {
+      result = await navigator.push<int>(route);
+    } finally {
+      _activeGameRoute = null;
+    }
 
     if (!mounted || result == null) {
       return;
     }
 
+    _handleGameResult(result);
+  }
+
+  void _handleGameResult(int result) {
     setState(() {
       _lastScore = result;
       if (result > _bestScore) {
@@ -34,6 +58,7 @@ class _EmojiDodgeAppState extends State<EmojiDodgeApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Emoji Dodge',
       theme: ThemeData(
@@ -44,12 +69,10 @@ class _EmojiDodgeAppState extends State<EmojiDodgeApp> {
         ),
         scaffoldBackgroundColor: const Color(0xFFFFF7E8),
       ),
-      home: Builder(
-        builder: (BuildContext homeContext) => HomeScreen(
-          bestScore: _bestScore,
-          lastScore: _lastScore,
-          onStartGame: () => _openGame(homeContext),
-        ),
+      home: HomeScreen(
+        bestScore: _bestScore,
+        lastScore: _lastScore,
+        onStartGame: _openGame,
       ),
     );
   }
