@@ -21,6 +21,7 @@ void main() {
 
     await tester.tap(find.text('Start Game'));
     await tester.pump();
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Score'), findsOneWidget);
@@ -33,6 +34,7 @@ void main() {
     await tester.pumpWidget(const EmojiDodgeApp());
 
     await tester.tap(find.text('Start Game'));
+    await tester.pump();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -47,6 +49,7 @@ void main() {
 
     await tester.tap(find.text('Start Game'));
     await tester.pump();
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Score'), findsOneWidget);
@@ -60,6 +63,7 @@ void main() {
     await tester.tap(find.text('Start Game'));
     await tester.tap(find.text('Start Game'));
     await tester.pump();
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Score'), findsOneWidget);
@@ -70,6 +74,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     await tester.tap(find.text('Start Game'));
+    await tester.pump();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 

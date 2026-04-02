@@ -1,105 +1,139 @@
----
+# 🧠 Codex Prompts – Emoji Dodge (Flutter Game)
 
-## 🟢 Step 1: Home Screen
-
-Create a Flutter Home Screen:
-- Title: "Emoji Dodge"
-- Start Game button
-- Navigate to GameScreen
-- Create placeholder GameScreen
+This document provides a complete prompt to generate a **fully playable Flutter mobile game** called **Emoji Dodge** using Codex or any AI code generator.
 
 ---
 
-## 🟡 Step 2: Game Layout
+## 🎯 Objective
 
-Update GameScreen:
-- Dark background
-- Player at bottom center
-- Score at top
-- Use Stack layout
-
----
-
-## 🟠 Step 3: Player Movement
-
-Add:
-- GestureDetector
-- Drag left/right movement
-- Restrict within screen bounds
+Create a complete Flutter mobile game where:
+- The player avoids falling emojis
+- The game becomes progressively harder
+- Score increases based on survival time
 
 ---
 
-## 🔵 Step 4: Falling Emojis
+## 📋 Core Requirements
 
-Add:
-- Emoji list (x, y, speed, type)
-- Game loop using Timer/Ticker
-- Random emoji spawn
-- Falling animation
-
----
-
-## 🔴 Step 5: Collision Detection
-
-Implement:
-- Bounding box collision
-- Stop game on hit
-- Show Game Over dialog
-- Restart button
+- The game must be **fully playable and runnable**
+- Use **Flutter (Dart) only**
+- Avoid external game engines (e.g., Flame) unless absolutely necessary
+- Organize code into **clean, modular files**
 
 ---
 
-## 🟣 Step 6: Score System
+## 🎮 Game Overview
 
-Add:
-- Score increases over time
-- Display live score
-- Show final score on Game Over
-
----
-
-## 🟤 Step 7: Restart & Navigation
-
-Add:
-- Restart game logic
-- Reset all states
-- Back to Home button
+- The player controls a character at the **bottom of the screen**
+- Emojis fall continuously from the **top**
+- The goal is to **avoid collisions**
+- The player survives as long as possible
+- Score increases based on survival duration
 
 ---
 
-## ⚫ Step 8: Difficulty Scaling
+## 🧱 App Structure
 
-Enhance:
-- Increase emoji speed over time
-- Increase spawn rate gradually
+### 1. Home Screen
 
----
-
-## ✨ Step 9: UI Improvements
-
-Improve:
-- Player design (emoji/avatar)
-- Background gradient
-- Smooth animations
-- Better fonts
+- Display title: **"Emoji Dodge"**
+- Show a **Start Game** button
+- Optionally display:
+    - Last score
+    - Best score
+- On button tap → Navigate to **Game Screen**
 
 ---
 
-## ⚠️ Debug Prompt (Important)
+### 2. Game Screen
 
-If code breaks, use:
-"Fix all compilation errors and provide fully runnable Flutter code."
+#### Player
+- Positioned at the **bottom**
+- Represented by:
+    - A simple shape (circle) OR
+    - An emoji/avatar
+
+#### Emojis (Obstacles)
+- Fall from the top continuously
+- Randomized:
+    - Position (X-axis)
+    - Speed
+    - Emoji type (😂🔥💣👾)
+
+#### Controls
+- Player moves:
+    - Left / Right using drag gestures
+
+#### Game Loop
+- Use:
+    - `Ticker` OR
+    - `AnimationController` OR
+    - `Timer.periodic`
+- Ensure smooth updates (~60 FPS)
+
+#### Collision Detection
+- Use bounding box logic
+- If collision occurs:
+    - Trigger Game Over
+
+#### Score System
+- Increase score over time
+- Display current score at the top
 
 ---
 
-## 🚀 Performance Prompt
+## 💀 Game Over Flow
 
-"Optimize game loop for smooth 60 FPS and reduce unnecessary rebuilds."
+Display dialog or overlay with:
+- Title: **Game Over**
+- Final Score
+- Buttons:
+    - Restart Game
+    - Back to Home
 
 ---
 
-## 🎯 Final Prompt
+## ⚙️ Technical Requirements
 
-"Combine all steps and provide clean, production-ready Flutter game code."
+- Use `StatefulWidget` where required
+- Maintain state for:
+    - Player position
+    - Emoji list (position, speed, type)
+    - Score
+- Efficient game loop implementation
+- Smooth performance (target ~60 FPS)
+- Proper navigation using `Navigator`
+
+---
+
+## 🎨 UI / UX Guidelines
+
+- Keep UI simple and clean
+- Use bright colors and emojis
+- Ensure responsive layout for different screen sizes
+- Maintain smooth animations
+
+---
+
+## 🚀 Bonus Features (Optional)
+
+- Increasing difficulty over time:
+    - Faster emojis
+    - Higher spawn rate
+- Multiple emoji types
+- Sound effects
+- Pause / Resume functionality
+- High score persistence
+
+---
+
+## 📦 Deliverables
+
+- Complete Flutter project code
+- `main.dart` entry point
+- Well-structured files (separate screens, logic)
+- Clear comments explaining core logic
+- No placeholder or incomplete code
+- Must be **fully runnable without errors**
 
 ---
